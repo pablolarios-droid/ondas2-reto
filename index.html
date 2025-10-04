@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Canvas con rebote y fondo</title>
+  <style>
+    html,body{
+      height:100%;
+      margin:0;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#000;
+    }
+    canvas{
+      display:block;
+      width:100%;
+      height:100%;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage"></canvas>
+
+  <script>
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+
+    function resize(){
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const W = () => canvas.width;
+    const H = () => canvas.height;
+
+   
+    const bg = new Image();
+    bg.src = 'backround.jpg'; 
+    let bgLoaded = false;
+    bg.onload = () => bgLoaded = true;
+
+    
+    const img = new Image();
+    img.src = 'abeja.webp'; 
+    let imgLoaded = false;
+    img.onload = () => imgLoaded = true;
+
+    const params = {
+      speedX: 130,   
+      amplitude: 120,
+      freq: 0.005,  
+      size: 120,     
+    };
+
+    let xPos = params.size;
+    let dir = 1; // 
+    let lastTime = null;
+
+    function step(ts){
+      if (!lastTime) lastTime = ts;
+      const dt = (ts - lastTime) / 1000;
+      lastTime = ts;
+
+      xPos += dir * params.speedX * dt;
+      if (xPos > W() - params.size || xPos < 0) {
+        dir *= -1;
+        xPos = Math.max(0, Math.min(xPos, W()-params.size));
+      }
+
+      const k = params.freq * 2 * Math.PI;
+      const centerY = H()/2;
+      const yPos = centerY - params.size/2 + params.amplitude * Math.sin(k * xPos);
+
+      // 
+      if (bgLoaded) {
+        ctx.drawImage(bg, 0, 0, W(), H());
+      } else {
+        ctx.fillStyle = "#222";
+        ctx.fillRect(0,0,W(),H());
+      }
+
+      
+      if (imgLoaded) {
+        const aspect = img.width / img.height || 1;
+        const drawW = params.size;
+        const drawH = params.size / aspect;
+        ctx.drawImage(img, xPos, yPos, drawW, drawH);
+      } else {
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.arc(xPos+params.size/2,yPos+params.size/2,params.size/2,0,Math.PI*2);
+        ctx.fill();
+      }
+
+      requestAnimationFrame(step);
+    }
+
+    requestAnimationFrame(step);
+  </script>
+</body>
+</html>
